@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Selenium Test Playground & Stock Chart</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f7fa;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    h1, h2, h3 {
+      color: #2c3e50;
+    }
+
+    .section {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    label {
+      display: inline-block;
+      width: 140px;
+      font-weight: 500;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="email"],
+    input[type="file"],
+    textarea,
+    select {
+      padding: 8px;
+      width: 250px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      margin: 5px 0 15px;
+    }
+
+    button {
+      padding: 10px 16px;
+      margin: 5px 10px 5px 0;
+      border: none;
+      border-radius: 5px;
+      background-color: #3498db;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+
+    th, td {
+      padding: 8px;
+      text-align: left;
+    }
+
+    iframe {
+      width: 48%;
+      height: 200px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    .container {
+      display: flex;
+      gap: 4%;
+      flex-wrap: wrap;
+      margin-top: 15px;
+    }
+
+    .modal, .overlay {
+      position: fixed;
+      display: none;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 999;
+    }
+
+    .overlay {
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 998;
+    }
+
+    .modal {
+      background: white;
+      width: 320px;
+      height: 200px;
+      margin: auto;
+      top: 20%;
+      left: 0; right: 0;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      padding: 20px;
+      z-index: 999;
+    }
+
+    .hidden-element {
+      display: none;
+      margin: 10px 0;
+      color: red;
+      font-style: italic;
+    }
+
+    #dynamicContent {
+      padding: 10px;
+      border: 1px dashed #aaa;
+      background: #eef6ff;
+    }
+
+    .tabs button {
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+      border: none;
+      background: #eee;
+      border-radius: 5px;
+    }
+
+    .tabs button.active {
+      background: black;
+      color: white;
+    }
+
+    .stats {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+
+    .returns {
+      font-weight: bold;
+    }
+  </style>
+  <script>
+
+function showConfirm() {
+    const result = confirm("Do you want to proceed?");
+    if (result) {
+      console.log("User clicked OK");
+    } else {
+      console.log("User clicked Cancel");
+    }
+  }
+    function openNewTab() {
+      window.open('https://example.com', '_blank');
+    }
+
+    function openNewWindow() {
+      window.open('https://example.com', 'newWindow', 'width=600,height=400');
+    }
+
+    function openFrameWindow() {
+      const newWin = window.open('', 'frameWindow', 'width=600,height=400');
+      newWin.document.write(`
+        <html><body style='font-family: sans-serif;'>
+        <h2>Window with iframe</h2>
+        <iframe srcdoc="<p>Iframe content</p><input type='text' id='iframeInput' placeholder='Inside iframe'>" width='100%' height='200'></iframe>
+        </body></html>`);
+      newWin.document.close();
+    }
+
+    function showModal() {
+      document.getElementById('modal').style.display = 'block';
+      document.getElementById('overlay').style.display = 'block';
+    }
+
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+      document.getElementById('overlay').style.display = 'none';
+    }
+
+    function loadContent() {
+      setTimeout(function () {
+        document.getElementById('textarea').style.display = 'block';
+      }, 5000);
+      setTimeout(() => {
+        document.getElementById('dynamicContent').textContent = "This content was loaded dynamically after 3 seconds.";
+      }, 3000);
+    
+    }
+
+    const data = {
+      '1D': { high: '₹627.00', low: '₹608.25', returns: '+0.89%' },
+      '1W': { high: '₹645.50', low: '₹600.30', returns: '+1.56%' },
+      '1M': { high: '₹723.05', low: '₹535.75', returns: '-9.06%' },
+      '1Y': { high: '₹880.00', low: '₹550.50', returns: '+18.25%' }
+    };
+
+    function updateData(period) {
+      document.getElementById('high').textContent = data[period].high;
+      document.getElementById('low').textContent = data[period].low;
+      document.getElementById('returns').textContent = data[period].returns;
+      document.getElementById('returns').style.color = data[period].returns.includes('-') ? 'red' : 'green';
+
+      document.querySelectorAll('.tabs button').forEach(btn => btn.classList.remove('active'));
+      Array.from(document.querySelectorAll('.tabs button')).find(btn => btn.textContent === period).classList.add('active');
+    }
+
+    window.onload = () => {
+      loadContent();
+
+      // Inject content into iframes
+      const frame1Doc = document.getElementById("frame1").contentWindow.document;
+      frame1Doc.open();
+      frame1Doc.write(`
+        <html>
+          <body>
+            <p>Frame 1 content</p>
+            <input type='text' placeholder='Frame 1 input'>
+          </body>
+        </html>
+      `);
+      frame1Doc.close();
+
+      const frame2Doc = document.getElementById("frame2").contentWindow.document;
+      frame2Doc.open();
+      frame2Doc.write(`
+        <html>
+          <body>
+            <p>Frame 2 content</p>
+            <button onclick="alert('Hello from frame 2')">Click</button>
+          </body>
+        </html>
+      `);
+      frame2Doc.close();
+    }
+  </script>
+</head>
+<body>
+  <h1>Selenium Automation Testing Playground</h1>
+
+  <div class="section">
+    <h3>Basic Inputs</h3>
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username"><br>
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password"><br>
+
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email"><br>
+
+    <label for="textarea">Comments:</label><br>
+    <textarea id="textarea" name="textarea" rows="4" cols="30" style="display: none;"></textarea><br>
+
+    <label for="disabledInput">Disabled Input:</label>
+    <input type="text" id="disabledInput" name="disabledInput" value="Can't edit" disabled><br>
+
+    <label for="fileUpload">Upload File:</label>
+    <input type="file" id="fileUpload" name="fileUpload"><br>
+
+    <div id="hiddenText" class="hidden-element">You found a hidden element!</div>
+  </div>
+
+  <div class="section">
+    <h3>Selections</h3>
+    <label>Gender:</label>
+    <input type="radio" name="gender" id="male" value="male"><label for="male">Male</label>
+    <input type="radio" name="gender" id="female" value="female"><label for="female">Female</label><br><br>
+    <label for="dob">Date of Birth:</label>
+    <input type="date" id="dob" name="dob"><br>
+    <br>
+    <label>Skills:</label>
+    <input type="checkbox" id="java" name="skill" value="Java"><label for="java">Java</label>
+    <input type="checkbox" id="python" name="skill" value="Python"><label for="python">Python</label><br><br>
+
+    <label for="country">Country:</label>
+    <select id="country" name="country">
+      <option value="">--Select--</option>
+      <option value="India">India</option>
+      <option value="USA">USA</option>
+    </select><br>
+
+    <label for="skills">Multi-select:</label>
+    <select multiple id="skills" name="skills">
+      <option>Selenium</option>
+      <option>Java</option>
+      <option>Python</option>
+    </select>
+  </div>
+
+  <div class="section">
+    <h3>Employee Table</h3>
+    <table id="employeeTable">
+      <tr><th>Name</th><th>Role</th></tr>
+      <tr><td>Alice</td><td>Engineer</td></tr>
+      <tr><td>Bob</td><td>Tester</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h3>Buttons & Actions</h3>
+    <button onclick="showConfirm()">Show Alert</button>
+    <button onclick="showModal()">Show Modal</button>
+    <button onclick="openNewTab()">Open Tab</button>
+    <button onclick="openNewWindow()">Open Window</button>
+    <button onclick="openFrameWindow()">Open Frame Window</button>
+  </div>
+
+  <div class="section">
+    <h3>Modal & Dynamic Content</h3>
+    <div id="dynamicContent">Loading...</div>
+  </div>
+
+  <div class="overlay" id="overlay"></div>
+  <div class="modal" id="modal">
+    <h3>This is a Modal</h3>
+    <p>Modal content for Selenium interaction.</p>
+    <button onclick="closeModal()">Close</button>
+  </div>
+
+  <div class="section">
+    <h2>TATAMOTORS Share Price Chart</h2>
+    <div class="tabs">
+      <button onclick="updateData('1D')" class="active">1D</button>
+      <button onclick="updateData('1W')">1W</button>
+      <button onclick="updateData('1M')">1M</button>
+      <button onclick="updateData('1Y')">1Y</button>
+    </div>
+    <div class="stats">
+      <p>High: <span id="high">₹627.00</span></p>
+      <p>Low: <span id="low">₹608.25</span></p>
+      <p>Returns: <span id="returns" class="returns">+0.89%</span></p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Iframes</h3>
+    <div class="container">
+      <iframe id="frame1" name="frame1"></iframe>
+      <iframe id="frame2" name="frame2"></iframe>
+    </div>
+    <div class="section">
+      <h3>Mouse Click Actions</h3>
+    
+      <button id="leftClickBtn" onclick="alert('Left click detected!')">Left Click Me</button><br><br>
+    
+      <div id="rightClickBox"
+           oncontextmenu="event.preventDefault(); alert('Right click detected!')"
+           style="width: 200px; height: 100px; background-color: #eee; border: 1px solid #aaa; line-height: 100px; text-align: center; cursor: context-menu;">
+        Right Click Me
+      </div>
+    </div>
+  </div>
+</body>
+</html>
